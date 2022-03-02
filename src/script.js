@@ -17,38 +17,45 @@ const Modal = {
     }
 };
 
-const transactions = [
-    {
-        id: 1,
-        description: "luz",
-        amount: -50000,
-        date: "25/02/2022"
-    },
-    {
-        id: 2,
-        description: "Criação de Website",
-        amount: 500000,
-        date: "25/02/2022"
-    },
-    {
-        id: 3,
-        description: "Internet",
-        amount: -20000,
-        date: "25/02/2022"
-    },
-    {
-        id: 4,
-        description: "App",
-        amount: 200000,
-        date: "01/03/2022"
-    }
-];
-
-
 const Transaction = {
+    all: [
+        {
+            description: "luz",
+            amount: -50000,
+            date: "25/02/2022"
+        },
+        {
+            description: "Criação de Website",
+            amount: 500000,
+            date: "25/02/2022"
+        },
+        {
+            description: "Internet",
+            amount: -20000,
+            date: "25/02/2022"
+        },
+        {
+            description: "App",
+            amount: 200000,
+            date: "01/03/2022"
+        }
+    ],
+
+    add(transaction) {
+        Transaction.all.push(transaction);
+
+        app.reload();
+    },
+
+    remove(index) {
+        Transaction.all.splice(index, 1);
+
+        app.reload();
+    },
+
     income() {
         let sumIncome = 0;
-        transactions.forEach(transaction => {
+        Transaction.all.forEach(transaction => {
             if (transaction.amount > 0) {
                 sumIncome += transaction.amount;
             }
@@ -57,7 +64,7 @@ const Transaction = {
     },
     expense() {
         let sumExpense = 0;
-        transactions.forEach(transaction => {
+        Transaction.all.forEach(transaction => {
             if (transaction.amount < 0) {
                 sumExpense += transaction.amount;
             }
@@ -100,20 +107,36 @@ const DOM = {
         return html;
     },
 
-    updateBalance () {
+    updateBalance() {
         document
         .getElementById("incomeDisplay")
-        .innerHTML = Transaction.income();
+        .innerHTML = Utils.formatCurrency(Transaction.income());
         document
         .getElementById("expenseDisplay")
-        .innerHTML = Transaction.expense();
+        .innerHTML = Utils.formatCurrency(Transaction.expense());
         document
         .getElementById("totalDisplay")
-        .innerHTML = Transaction.total();
+        .innerHTML = Utils.formatCurrency(Transaction.total());
+    },
+
+    clearTransactions() {
+        DOM.transactionsContainer.innerHTML = "";
     }
 }
 
 const Utils = {
+    formatAmount(value) {
+        value = Number(value) * 100;
+        
+        return value;
+    },
+
+    formatDate(date) {
+        const splittedDate = date.split("-");
+
+        return `${splittedDate[2]}/${splittedDate[1]}/${splittedDate[0]}`;
+    },
+
     formatCurrency(value) {
         const signal = Number(value) < 0 ? "-" : "" ;
 
@@ -130,9 +153,68 @@ const Utils = {
     }
 }
 
+const Form = {
+    description: document.querySelector("input#description"),
+    amount: document.querySelector("input#amount"),
+    date: document.querySelector("input#Date"),
 
-transactions.forEach(function (transactions) {
-    DOM.addTrasaction(transactions);
-});
+    getValues() {
+        return {
+            description: Form.description.value,
+            amount: Form.amount.value,
+            date: Form.date.value
+        }
+    },
 
-DOM.updateBalance();
+    validateFields() {
+        const {description, amount, date} = Form.getValues();
+        if (description.trim() === "" || amount.trim() === "" || date.trim() === "") {
+            throw new Error("Por favor, preencha todos os campos");
+        }
+    },
+
+    formatValues() {
+        let {description, amount, date} = Form.getValues();
+
+        amount = Utils.formatAmount(amount);
+
+        date = Utils.formatDate(date);
+
+        return {description, amount, date};
+    },
+
+    submit(event) {
+        event.preventDefault();
+
+        try {
+            // verificar se as informações foram preenchidas
+            Form.validateFields();
+            // formatar os dados para salvar
+            const transaction = Form.formatValues();
+            // Apagar os dados do formulário
+            // Modal feche
+            // Atualizar a aplicação            
+        } catch (error) {
+            alert(error.message)
+        }
+        
+    }
+}
+
+const app = {
+    init() {
+        Transaction.all.forEach(transaction => {
+            DOM.addTrasaction(transaction);
+    });
+
+    DOM.updateBalance();
+
+    },
+    reload() {
+        DOM.clearTransactions();
+        app.init();
+    }
+};
+
+app.init();
+
