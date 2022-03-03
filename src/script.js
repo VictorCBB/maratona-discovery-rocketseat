@@ -3,54 +3,42 @@ const Modal = {
         //abrir modal
         //adicionar a classe active ao modal
         document
-            .querySelector(".modal-overlay")
-            .classList
-            .add('active');
+        .querySelector(".modal-overlay")
+        .classList
+        .add('active');
     },
     close(){
         //fechar modal
         //remover a classe active do modal
         document
-            .querySelector(".modal-overlay")
-            .classList
-            .remove('active');
+        .querySelector(".modal-overlay")
+        .classList
+        .remove('active');
+    }
+};
+
+const Storage = {
+    get() {
+        return JSON.parse(localStorage.getItem("dev.finances:transactions")) || [];
+    },
+    set(transactions) {
+        localStorage.setItem("dev.finances:transactions", JSON.stringify(transactions));
     }
 };
 
 const Transaction = {
-    all: [
-        {
-            description: "luz",
-            amount: -50000,
-            date: "25/02/2022"
-        },
-        {
-            description: "Criação de Website",
-            amount: 500000,
-            date: "25/02/2022"
-        },
-        {
-            description: "Internet",
-            amount: -20000,
-            date: "25/02/2022"
-        },
-        {
-            description: "App",
-            amount: 200000,
-            date: "01/03/2022"
-        }
-    ],
+    all: Storage.get(),
 
     add(transaction) {
         Transaction.all.push(transaction);
 
-        app.reload();
+        App.reload();
     },
 
     remove(index) {
         Transaction.all.splice(index, 1);
 
-        app.reload();
+        App.reload();
     },
 
     income() {
@@ -83,12 +71,13 @@ const DOM = {
 
     addTrasaction(transactions, index) {
         const tr = document.createElement('tr');
-        tr.innerHTML = DOM.innerHTMLTransaction(transactions);
+        tr.innerHTML = DOM.innerHTMLTransaction(transactions, index);
+        tr.dataset.index = index;
 
         DOM.transactionsContainer.appendChild(tr);
     },
 
-    innerHTMLTransaction(transactions) {
+    innerHTMLTransaction(transactions, index) {
         const CSSClass = transactions.amount > 0 ? "income" : "expense";
 
         const amount = Utils.formatCurrency(transactions.amount);
@@ -99,7 +88,7 @@ const DOM = {
             <td class=${CSSClass}>${amount}</td>
             <td class="date">${transactions.date}</td>
             <td>
-                <img src="../src/assets/minus.svg" alt="Remover trasação">
+                <img onclick="Transaction.remove(${index})" src="../src/assets/minus.svg" alt="Remover trasação">
             </td>
         </tr>
         `
@@ -148,7 +137,7 @@ const Utils = {
             style: "currency",
             currency: "BRL"
         });
-
+        
         return signal + value;
     }
 }
@@ -183,6 +172,12 @@ const Form = {
         return {description, amount, date};
     },
 
+    clearFields(){
+        Form.description.value = "";
+        Form.amount.value = "";
+        Form.date.value = "";
+    },
+
     submit(event) {
         event.preventDefault();
 
@@ -191,9 +186,12 @@ const Form = {
             Form.validateFields();
             // formatar os dados para salvar
             const transaction = Form.formatValues();
+            // salvar
+            Transaction.add(transaction);
             // Apagar os dados do formulário
-            // Modal feche
-            // Atualizar a aplicação            
+            Form.clearFields();
+            // Modal fechar
+            Modal.close();         
         } catch (error) {
             alert(error.message)
         }
@@ -201,20 +199,23 @@ const Form = {
     }
 }
 
-const app = {
+
+const App = {
     init() {
-        Transaction.all.forEach(transaction => {
-            DOM.addTrasaction(transaction);
+        Transaction.all.forEach((transaction, index) => {
+            DOM.addTrasaction(transaction, index);
     });
 
     DOM.updateBalance();
 
+    Storage.set(Transaction.all);
+
     },
     reload() {
         DOM.clearTransactions();
-        app.init();
+        App.init();
     }
 };
 
-app.init();
+App.init();
 
