@@ -32,12 +32,14 @@ const Transaction = {
     add(transaction) {
         Transaction.all.push(transaction);
 
+        DOM.negativeBalance();
         App.reload();
     },
 
     remove(index) {
         Transaction.all.splice(index, 1);
 
+        DOM.negativeBalance();
         App.reload();
     },
 
@@ -61,8 +63,9 @@ const Transaction = {
     },
     total() {
         return Transaction.income() + Transaction.expense();
-    }
-}
+    },
+};
+
 
 // Colocar no HTML os valores do objeto transactions 
 
@@ -110,8 +113,17 @@ const DOM = {
 
     clearTransactions() {
         DOM.transactionsContainer.innerHTML = "";
+    },
+
+    negativeBalance() {
+        let div = document.querySelector(".card.total");
+        if (Transaction.total() < 0) {
+            div.classList.add("red");
+        } else {
+            div.classList.remove("red");
+        }
     }
-}
+};
 
 const Utils = {
     formatAmount(value) {
@@ -140,7 +152,7 @@ const Utils = {
         
         return signal + value;
     }
-}
+};
 
 const Form = {
     description: document.querySelector("input#description"),
@@ -197,7 +209,7 @@ const Form = {
         }
         
     }
-}
+};
 
 
 const App = {
@@ -207,15 +219,15 @@ const App = {
     });
 
     DOM.updateBalance();
-
+    
     Storage.set(Transaction.all);
-
-    },
-    reload() {
-        DOM.clearTransactions();
-        App.init();
+    
+},
+reload() {
+    DOM.clearTransactions();
+    App.init();
     }
 };
 
-App.init();
 
+App.init();
